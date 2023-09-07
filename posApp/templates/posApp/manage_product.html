@@ -1,0 +1,135 @@
+<div class="container-fluid">
+  <form action="" id="product-form">
+    {% if product.pk %}
+    <input type="hidden" name="id" value="{{ product.pk }}">
+    {% endif %}
+        
+    <div class="form-group mb-3">
+      <label for="code" class="control-label">Code</label>
+      <input type="text" name="code" id="code" class="form-control form-control-sm rounded-0" value="{% if product.code %}{{ product.code }}{% else %}{{ random_string }}{% endif %}" required {% if product.pk %}readonly{% endif %}>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="category_id" class="control-label">Category</label>
+      <select name="category_id" id="category_id" class="form-select form-select-sm rounded-0" required>
+        {% if not product.category_id %}
+        <option value="" disabled selected></option>
+        {% endif %}
+        {% for category in categories %}
+        <option value="{{ category.id }}" {% if product.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="name" class="control-label">Product Name</label>
+      <input type="text" name="name" id="name" class="form-control form-control-sm rounded-0" value="{% if product.name %}{{ product.name }}{% endif %}" required>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="description" class="control-label">Description</label>
+      <textarea rows="5" name="description" id="description" class="form-control form-control-sm rounded-0" required>{% if product.description %}{{ product.description }}{% endif %}</textarea>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="quantity" class="control-label">Quantity</label>
+      <input type="number" name="quantity" id="quantity" class="form-control form-control-sm rounded-0" value="{% if product.quantity %}{{ product.quantity }}{% endif %}" required>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="price" class="control-label">Price</label>
+      <input type="text" name="price" id="price" class="form-control form-control-sm rounded-0" value="{% if product.price %}{{ product.price }}{% endif %}" required>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="status" class="control-label">Status</label>
+      <select name="status" id="status" class="form-select form-select-sm rounded-0" required>
+        <option value="1" {% if product.status == 1 %}selected{% endif %}>Active</option>
+        <option value="0" {% if product.status == 0 %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+  </form>
+</div>
+
+<script>
+  function generateRandomString(length) {
+    var result = '';
+    var characters = '0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
+
+  $(function() {
+    // Generate and set a random string for the 'code' field only if it's a new product
+    if (!$('#code').val()) {
+      var random_string = generateRandomString(8);
+      $('#code').val(random_string);
+    }
+    
+    $('#product-form').submit(function(e) {
+      e.preventDefault();
+      var _this = $(this);
+      $('.err-msg').remove();
+      var el = $('<div>');
+      el.addClass("alert alert-danger err-msg");
+      el.hide();
+
+      if (!_this[0].checkValidity()) {
+        _this[0].reportValidity();
+        return false;
+      }
+
+      start_loader();
+
+      // Create FormData object from the form
+      var formData = new FormData(_this[0]);
+
+      $.ajax({
+        headers: {
+          "X-CSRFToken": '{{ csrf_token }}'
+        },
+        url: "{% url 'save-product-page' %}",
+        data: formData,
+        cache: false,
+        contentType: false,
+        processData: false,
+        method: 'POST',
+        dataType: 'json',
+        success: function(resp) {
+          console.log("AJAX request successful:", resp);
+
+          if (typeof resp === 'object' && resp.status === 'success') {
+            el.removeClass("alert alert-danger err-msg");
+            location.reload();  // Reload the page to reflect changes
+          } else if (resp.status === 'failed' && resp.msg) {
+            el.text(resp.msg);
+          } else {
+            el.text("An error occurred");
+            console.error(resp);
+          }
+
+          _this.prepend(el);
+          el.show('slow');
+          $("html, body, .modal").scrollTop(0);
+          end_loader();
+        },
+        error: function(xhr, textStatus, errorThrown) {
+          console.log("AJAX request error:", textStatus);
+          // Handle error cases here if needed
+          end_loader();
+        }
+      });
+    });
+
+    // Add click event handler for the print button
+    $('#print-button').click(function() {
+      var code = $('#code').val();
+      var price = $('#price').val(); // Capture the price value
+      var printContent = 'Product Code: ' + code + '\nPrice: ' + price; // Include price in the print content
+      alert(printContent); // Replace this with your actual printing logic
+    });
+  });
+</script>

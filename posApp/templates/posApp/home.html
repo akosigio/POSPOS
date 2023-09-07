@@ -1,0 +1,119 @@
+{% extends "posApp/base.html" %} {% load humanize %} {% block pageContent %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card with-background-image">
+        <div class="d-flex justify-content-between">
+            <h1 class="card-title mb-0">.</h1>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-3-tablet">
+    <div class="mdc-card info-card info-card--secondary with-border rounded">
+        <div class="card-inner">
+            <h5 class="card-title">Today's Sales</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">0</h5>
+            <p class="tx-12 text-muted">Today's Expenses</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">receipt</i>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-3-tablet">
+    <div class="mdc-card info-card info-card--info with-borders rounded">
+        <div class="card-inner">
+            <h5 class="card-title">Monthly Sales</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ transaction|intcomma }}</h5>
+            <p class="tx-12 text-muted">Your Monthly Sales</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">receipt</i>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-3-tablet">
+    <div class="mdc-card info-card info-card--success with-borderss rounded">
+        <div class="card-inner">
+            <h5 class="card-title">Daily Expenses</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ total_daily_expenses|intcomma }}</h5>
+            <p class="tx-12 text-muted">Today's Expenses</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">payment</i>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-3-tablet">
+    <div class="mdc-card info-card info-card--dark with-bordersss rounded">
+        <div class="card-inner">
+            <h5 class="card-title">Monthly Expenses</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ total_monthly_expenses|intcomma }}</h5>
+            <p class="tx-12 text-muted"> Your Monthly Expenses</p>
+            <div class="card-icon-wrapper">
+                <i class="material-icons">payment</i>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
+    <div class="mdc-card rounded">
+        <div class="card-inner">
+            <h5 class="card-title">Daily Expenses Pie Chart</h5>
+            <canvas id="dailyPieChart"></canvas>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6">
+    <div class="mdc-card rounded">
+        <div class="card-inner">
+            <h5 class="card-title">Monthly Expenses Pie Chart</h5>
+            <canvas id="monthlyPieChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock pageContent %}
+{% block ScriptBlock %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    
+    // Extract daily and monthly expenses from the cards
+    var totalDailyExpenses = parseFloat(document.querySelector('.info-card--success h5.font-weight-light').textContent.replace(/,/g, ''));
+    var totalMonthlyExpenses = parseFloat(document.querySelector('.info-card--dark h5.font-weight-light').textContent.replace(/,/g, ''));
+
+    // Data for daily expenses pie chart
+    var dailyExpensesData = {
+        labels: ["Daily Expenses", "Remaining"],
+        datasets: [{
+            data: [totalDailyExpenses, 0], // Total daily expenses and remaining (assuming you want the remaining amount in the pie chart)
+            backgroundColor: ["#5C5470", "#B9B4C7"],
+        }]
+    };
+
+    // Data for monthly expenses pie chart
+    var monthlyExpensesData = {
+        labels: ["Monthly Expenses", "Remaining"],
+        datasets: [{
+            data: [totalMonthlyExpenses, 0], // Total monthly expenses and remaining (assuming you want the remaining amount in the pie chart)
+            backgroundColor: ["#9EB384", "#D4E2D4"],
+        }]
+    };
+
+    // Get the canvas elements
+    var dailyPieChartCanvas = document.getElementById("dailyPieChart").getContext("2d");
+    var monthlyPieChartCanvas = document.getElementById("monthlyPieChart").getContext("2d");
+
+    // Create the daily expenses pie chart
+    var dailyPieChart = new Chart(dailyPieChartCanvas, {
+        type: "pie",
+        data: dailyExpensesData,
+    });
+
+    // Create the monthly expenses pie chart
+    var monthlyPieChart = new Chart(monthlyPieChartCanvas, {
+        type: "pie",
+        data: monthlyExpensesData,
+    });
+</script>
+
+{% endblock ScriptBlock %}
+

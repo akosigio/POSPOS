@@ -1,0 +1,103 @@
+{% load static %}
+<!-- partial:partials/_sidebar.html -->
+<style>
+    .mdc-drawer {
+      background-color: #212121 !important;
+    }
+  </style>
+<aside class="mdc-drawer mdc-drawer--dismissible mdc-drawer--open bg-dark bg-gradient" style="background-color: #212121;">
+    <div class="mdc-drawer__header border-bottom border-light">
+        <a href="{% url 'home-page' %}" class="brand-logo">
+            <div class="text-center" style="margin: 0;">
+                <style>
+                    .mdc-drawer.mdc-drawer--dismissible .mdc-drawer__header .brand-logo {
+                      padding: 0 !important;
+                    }
+                  </style>
+                <img src="/static/img/white.png" alt="EM AR Handicraft Logo" class="logo" style="width: 32%;">
+            </div>
+        </a>
+    </div>
+    <div class="mdc-drawer__content">
+        <div class="mdc-list-group">
+            <nav class="mdc-list mdc-drawer-menu">
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'home-page' %}" onclick="markAsActive(this, event)">
+                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">home</i> Home
+                    </a>
+                    </div>
+                    <style>
+                    /* Add your CSS styles for the 'active' class here */
+                    .mdc-drawer-link.active {
+                        background-color: white;
+                        /* Add any other styles you want to retain when the link is active */
+                    }
+                    </style>
+                    <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        function markAsActive(linkElement, event) {
+                            // Remove the 'active' class from all links with the 'mdc-drawer-link' class
+                            var allLinks = document.querySelectorAll('.mdc-drawer-link');
+                            allLinks.forEach(function (element) {
+                                element.classList.remove('active');
+                            });
+                    
+                            // Add the 'active' class to the clicked link
+                            linkElement.classList.add('active');
+                        }
+                    });
+                    </script>
+
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'expenses-page' %}" onclick="markAsActive(this, event)">
+                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">payment</i> Expenses
+                    </a>
+                </div>
+                <style>
+                    /* Add your CSS styles for the 'active' class here */
+                    .mdc-drawer-link.active {
+                       background-color: white; /* Example background color */
+                         /* Add any other styles you want to retain when the link is active */
+                        }
+                    </style>
+                    <script>
+                    function markAsActive(linkElement, event) {
+                            
+                        // Remove the 'active' class from all links with the 'mdc-drawer-link' class
+                        var allLinks = document.querySelectorAll('.mdc-drawer-link');
+                        allLinks.forEach(function (element) {
+                            element.classList.remove('active');
+                        });
+                    
+                        // Add the 'active' class to the clicked link
+                        linkElement.classList.add('active');
+                        
+                    }
+                    </script>
+
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'category-page' %}">
+                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">list</i> Category List
+                    </a>
+                </div>
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'product-page' %}">
+                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">label</i> Product List
+                    </a>
+                </div>
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'pos-page' %}">
+                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">local_grocery_store</i> POS
+                    </a>
+                </div>
+                
+                <div class="mdc-list-item mdc-drawer-item">
+                    <a class="mdc-drawer-link" href="{% url 'sales-page' %}">
+                        <i class="material-icons mdc-list-item__start-detail mdc-drawer-item-icon" aria-hidden="true">receipt</i> Sales
+                    </a>
+                </div>
+            </nav>
+        </div>
+    </div>
+</aside>
+<!-- partial -->
