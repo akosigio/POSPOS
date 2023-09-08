@@ -17,7 +17,25 @@ from .models import Expense
 from django.db.models.functions import TruncMonth, TruncYear
 # Login
 
-
+def lookup_product(request):
+    barcode = request.GET.get('barcode', None)
+    
+    if barcode:
+        try:
+            product = Products.objects.get(code=barcode)
+            response_data = {
+                'status': 'success',
+                'product': {
+                    'name': product.name,
+                    'price': product.price,
+                }
+            }
+        except Products.DoesNotExist:
+            response_data = {'status': 'error', 'message': 'Product not found.'}
+    else:
+        response_data = {'status': 'error', 'message': 'Invalid barcode.'}
+    
+    return JsonResponse(response_data)
  
 
 def login_user(request):
