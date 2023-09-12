@@ -14,6 +14,7 @@
                 <div class="row align-items-end">
                     <div class="col-lg-5 col-md-5 col-sm-12">
                         <div class="form-group mb-3">
+                            18171350
                             <label for="product-id">Scan or Input Product Code</label>
                             <input id="barcode-input" type="text" placeholder="Scan Barcode" />
                             <select id="product-id" class="form-select form-select-sm">
@@ -206,14 +207,16 @@
         $('[name="tax"]').on('input keypress keydown keyup', function () {
             calc()
         })
-        $('#check_out').click(function () {
+        $('#check_out1').click(function () {
+            console.log("GIO")
             if ($('#POS-field table tbody tr').length <= 0) {
                 alert("Add atleast 1 product first!")
                 return false;
             }
             uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val())
         })
-        $('#pos-form').submit(function (e) {
+        $('#pos-form1').submit(function (e) {
+            console.log("RARA")
             e.preventDefault();
             var _this = $(this)
             $('.err-msg').remove();
@@ -339,24 +342,6 @@
                             total: total
                         };
 
-                        $.ajax({
-                            url: "{% url 'save-pos' %}",
-                            method: "POST",
-                            data: data,
-                            dataType: "json",
-                            success: function (response) {
-                                if (response.status === 'success') {
-                                    // Item saved successfully, you can handle it here
-                                    console.log('Item saved:', response.item);
-                                } else {
-                                    alert("Failed to save item.");
-                                }
-                            },
-                            error: function (error) {
-                                console.error("Error while saving item:", error);
-                            }
-                        });
-
                         // Now you can use the 'data' object as needed
                         console.log(data);
 
@@ -381,14 +366,6 @@
 
                         comp();
 
-                        $('#check_out').click(function () {
-                            if ($('#POS-field table tbody tr').length <= 0) {
-                                alert("Add at least 1 product first!")
-                                return false;
-                            }
-                            uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val())
-                        })
-
                     } else {
                         alert("Product not found.");
                     }
@@ -402,7 +379,70 @@
             });
         }
     });
+    $('#check_out').click(function () {
+        console.log("John K")
+                            if ($('#POS-field table tbody tr').length <= 0) {
+                                alert("Add at least 1 product first!")
+                                return false;
+                            }
+                            uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val())
+                        })
+                        $('#pos-form').submit(function (e) {
+                            
+            e.preventDefault();
+            alert("JK")
+            var _this = $(this)
+            $('.err-msg').remove();
+            var el = $('<div>')
+            el.addClass("alert alert-danger err-msg")
+            el.hide()
+            if (_this[0].checkValidity() == false) {
+                _this[0].reportValidity();
+                return false;
+            }
+            start_loader();
+            $.ajax({
+                headers: {
+                    "X-CSRFToken": '{{csrf_token}}'
+                },
+                url: "{% url 'save-pos' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+                error: err => {
+                    console.log(err)
+                    console.log(new FormData($(this)[0]))
+                    end_loader();
+                },
+                success: function (resp) {
+                    console.log(new FormData($(this)[0]))
+                    if (typeof resp == 'object' && resp.status == 'success') {
+                        el.removeClass("alert alert-danger err-msg")
+                        // location.reload()
+                        uni_modal("Receipt", "{% url 'receipt-modal' %}?id=" + resp.sale_id)
+                        $('#uni_modal').on('hide.bs.modal', function () {
+                            location.reload()
+                        })
+                    } else if (resp.status == 'failed' && !!resp.msg) {
+                        el.text(resp.msg)
+                    } else {
+                        el.text("An error occured", 'error');
+                        end_loader();
+                        console.err(resp)
+                    }
+                    _this.prepend(el)
+                    el.show('slow')
+                    $("html, body, .modal").scrollTop(0);
+                    end_loader()
+                }
+            })
+        })
 }
+
 
 
     // Call the autoScan function to enable scanning and adding to the table
