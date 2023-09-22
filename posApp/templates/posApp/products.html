@@ -140,7 +140,7 @@
         $('.print-barcode').click(function() {
             var productCode = $(this).attr('data-product-code');
             var productName = $(this).attr('data-product-name');
-            var productPrice = $(this).attr('data-product-price');
+            var productPrice = parseFloat($(this).attr('data-product-price')).toFixed(2);
             var numberOfCopies = 20;
             generateAndPrintBarcode(productCode, productName, productPrice, numberOfCopies);
         });
@@ -168,6 +168,7 @@
         canvas.height = desiredBarcodeHeight * 2; // Increase canvas dimensions
         var ctx = canvas.getContext('2d');
         ctx.scale(2, 2); // Scale the context
+        
 
         JsBarcode(canvas, productCode, {
             format: 'CODE128',
@@ -181,7 +182,7 @@
 
         printWindow.document.write('<div style="position: absolute; left: ' + xPosition + 'px; top: ' + (yPosition + desiredBarcodeHeight + 10) + 'px; text-align: center; width: ' + desiredBarcodeWidth + 'px;">');
         printWindow.document.write('<div style="margin-bottom: 5px;">' + productName + '</div>'); // Product name
-        printWindow.document.write('<div>' + productPrice + '</div>');
+        printWindow.document.write('<div>'+ 'PHP ' + productPrice + '</div>');
         printWindow.document.write('</div>');
     }
 

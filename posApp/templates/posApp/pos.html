@@ -1,4 +1,5 @@
-{% extends "posApp/base.html" %} {% block pageContent %}
+{% extends "posApp/base.html" %}
+{% block pageContent %}
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card with-background-image">
         <div class="d-flex justify-content-between">
@@ -14,9 +15,9 @@
                 <div class="row align-items-end">
                     <div class="col-lg-5 col-md-5 col-sm-12">
                         <div class="form-group mb-3">
-                            18171350
+                           <!-- 54572402
                             <label for="product-id">Scan or Input Product Code</label>
-                            <input id="barcode-input" type="text" placeholder="Scan Barcode" />
+                            <input id="barcode-input" type="text" placeholder="Scan Barcode" />-->
                             <select id="product-id" class="form-select form-select-sm">
                                 <option value="" disabled selected></option>
                                 {% for product in products %}
@@ -38,7 +39,6 @@
                                 id="add_item"><i class="mdi mdi-plus"></i> Add Item</button>
                         </div>
                     </div>
-
                 </div>
             </fieldset>
             <fieldset>
@@ -121,7 +121,9 @@
         <td class="px-2 py-1 product_price text-end"></td>
         <td class="px-2 py-1 product_total text-end"></td>
     </tr>
-</noscript> {% endblock pageContent %} {% block ScriptBlock %}
+</noscript>
+{% endblock pageContent %}
+{% block ScriptBlock %}
 <script>
     var product_json = '{{ product_json }}'
     if (product_json == "" || product_json == "{}") {
@@ -137,7 +139,183 @@
         })
     }
 
-    function calc() {
+    function addToTable(qty, product, price, total) {
+        const tableBody = $('tbody');
+        const newRow = $('<tr>');
+
+        // Add table cells with the provided data
+        newRow.append($('<td>').text(tableBody.children().length + 1)); // Auto-increment the first cell (index)
+        newRow.append($('<td>').text(qty));
+        newRow.append($('<td>').text(product));
+        newRow.append($('<td>').text(price));
+        newRow.append($('<td>').text(total));
+
+        // Append the new row to the table body
+        tableBody.append(newRow);
+    }
+
+    function comp() {
+        let sub_total = 0;
+        let totalSum = 0;
+
+        $('tbody tr').each(function () {
+            const price = parseFloat($(this).find('td:eq(3)').text());
+            const qty = parseFloat($(this).find('td:eq(1)').text());
+            const total = price * (qty > 0 ? qty : 0);
+
+            $(this).find('.product_total').text(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+            sub_total += total;
+
+            const totalCell = parseFloat($(this).find('td:eq(4)').text());
+            totalSum += totalCell;
+        });
+
+        const tax = parseFloat($('[name="tax"]').val()) / 100;
+        const tax_amount = sub_total * tax;
+
+        $('#tax_amount').text(tax_amount.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        $('[name="tax_amount"]').val(tax_amount);
+
+        $('#grand_total').text(sub_total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        $('[name="grand_total"]').val(sub_total);
+
+        $('#sub_total').text(sub_total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        $('[name="sub_total"]').text(sub_total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
+
+        const newTotalSum = totalSum.toFixed(2);
+        $('#grand_total').text(newTotalSum);
+    }
+    
+    function autoScan() {
+        const myInput = $('#barcode-input');
+
+        myInput.on('input', () => {
+            const inputValue = myInput.val();
+            console.log('Input value changed:', inputValue);
+
+            if (inputValue.length === 8) {
+                $.ajax({
+                    url: "{% url 'lookup-product' %}",
+                    method: "GET",
+                    data: { barcode: inputValue },
+                    dataType: "json",
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            const product = response.product;
+                            const qty = parseFloat($('#product-qty').val()); // Get the quantity from the input
+                            const price = parseFloat(product.price);
+                            const total = qty * price;
+                            const id = product.code;
+
+                            const data = {
+                                id: id,
+                                qty: qty,
+                                name: product.name,
+                                price: price,
+                                total: total
+                            };
+
+                            // Now you can use the 'data' object as needed
+                            console.log(data);
+
+                            const tableBody = $('tbody');
+                            const newRow = $('<tr>');
+
+                            newRow.append($('<td>').html('<button class="btn btn-sm btn-outline-danger rounded-0 rem-item" type="button"><i class="mdi mdi-close"></i></button>')
+                                .click(function () {
+                                    if (confirm("Are you sure to remove " + product.code + " product from the list?")) {
+                                        newRow.remove();
+                                        comp();
+                                    }
+                                })
+                            );
+
+                            newRow.append($('<td>').text(data.qty));
+                            newRow.append($('<td>').text(data.name));
+                            newRow.append($('<td>').text(data.price));
+                            newRow.append($('<td>').text(data.total));
+
+                            tableBody.append(newRow);
+
+                            comp();
+                        } else {
+                            alert("Product not found.");
+                        }
+
+                        myInput.val('');
+                    },
+                    error: function (error) {
+                        console.error("Error while looking up product:", error);
+                        myInput.val('');
+                    }
+                });
+            }
+        });
+    }
+
+    $('#check_out1').click(function () {
+        if ($('#POS-field table tbody tr').length <= 0) {
+            alert("Add at least 1 product first!")
+            return false;
+        }
+        uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val())
+    })
+    $('#pos-field1').submit(function (e) {
+    e.preventDefault();
+    var _this = $(this);
+    var formData = new FormData(_this[0]); // Capture the form element here
+    $('.err-msg').remove();
+    var el = $('<div>');
+    el.addClass("alert alert-danger err-msg");
+    el.hide();
+    if (_this[0].checkValidity() == false) {
+        _this[0].reportValidity();
+        return false;
+    }
+    start_loader();
+    $.ajax({
+        headers: {
+            "X-CSRFToken": '{{csrf_token}}'
+        },
+        url: "{% url 'save-pos' %}",
+        data: formData, // Use the formData captured earlier
+        cache: false,
+        contentType: false,
+        processData: false,
+        method: 'POST',
+        type: 'POST',
+        dataType: 'json',
+        error: err => {
+            console.log(err);
+            console.log(formData);
+            end_loader();
+        },
+        success: function (resp) {
+            console.log(formData);
+            if (typeof resp == 'object' && resp.status == 'success') {
+                el.removeClass("alert alert-danger err-msg");
+                // location.reload()
+                alert("Receipt", "{% url 'receipt-modal' %}?id=" + resp.sale_id);
+                $('#uni_modal').on('hide.bs.modal', function () {
+                    location.reload();
+                });
+            } else if (resp.status == 'failed' && !!resp.msg) {
+                el.text(resp.msg);
+            } else {
+                el.text("An error occurred", 'error');
+                end_loader();
+                console.error(resp);
+            }
+            _this.prepend(el);
+            el.show('slow');
+            $("html, body, .modal").scrollTop(0);
+            end_loader();
+        }
+    });
+});
+ autoScan();
+
+ function calc() {
         var sub_total = 0;
         var grand_total = 0;
         $('#POS-field table tbody tr').each(function () {
@@ -158,13 +336,14 @@
         $('[name="grand_total"]').val(parseFloat(sub_total))
         $('#sub_total').text(parseFloat(sub_total).toLocaleString('en-US'))
         $('[name="sub_total"]').val(parseFloat(sub_total))
-
     }
+
     $(function () {
         $('#product-id').select2({
             placeholder: "Please Select Product here",
             width: '100%'
         })
+
         $('#add_item').click(function () {
             var id = $('#product-id').val()
             var qty = $('#product-qty').val()
@@ -204,21 +383,25 @@
             }
             console.log(data)
         })
+
         $('[name="tax"]').on('input keypress keydown keyup', function () {
             calc()
         })
-        $('#check_out1').click(function () {
+
+        $('#check_out').click(function () {
             console.log("GIO")
             if ($('#POS-field table tbody tr').length <= 0) {
-                alert("Add atleast 1 product first!")
+                alert("Add at least 1 product first!")
                 return false;
             }
             uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val())
         })
-        $('#pos-form1').submit(function (e) {
-            console.log("RARA")
+
+        $('#pos-form').submit(function (e) {
+            
             e.preventDefault();
             var _this = $(this)
+            
             $('.err-msg').remove();
             var el = $('<div>')
             el.addClass("alert alert-danger err-msg")
@@ -227,6 +410,7 @@
                 _this[0].reportValidity();
                 return false;
             }
+            console.log(_this[0])
             start_loader();
             $.ajax({
                 headers: {
@@ -255,7 +439,7 @@
                     } else if (resp.status == 'failed' && !!resp.msg) {
                         el.text(resp.msg)
                     } else {
-                        el.text("An error occured", 'error');
+                        el.text("An error occurred", 'error');
                         end_loader();
                         console.err(resp)
                     }
@@ -267,185 +451,5 @@
             })
         })
     })
-
-    function addToTable(qty, product, price, total) {
-        const tableBody = $('tbody');
-        const newRow = $('<tr>');
-
-        // Add table cells with the provided data
-        newRow.append($('<td>').text(tableBody.children().length + 1)); // Auto-increment the first cell (index)
-        newRow.append($('<td>').text(qty));
-        newRow.append($('<td>').text(product));
-        newRow.append($('<td>').text(price));
-        newRow.append($('<td>').text(total));
-
-        // Append the new row to the table body
-        tableBody.append(newRow);
-    }
-    function comp() {
-        let sub_total = 0;
-        let totalSum = 0;
-
-        $('tbody tr').each(function () {
-            const price = parseFloat($(this).find('td:eq(3)').text());
-            const qty = parseFloat($(this).find('td:eq(1)').text());
-            const total = price * (qty > 0 ? qty : 0);
-
-            $(this).find('.product_total').text(total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
-            sub_total += total;
-
-            const totalCell = parseFloat($(this).find('td:eq(4)').text());
-            totalSum += totalCell;
-        });
-
-        const tax = parseFloat($('[name="tax"]').val()) / 100;
-        const tax_amount = sub_total * tax;
-
-        $('#tax_amount').text(tax_amount.toLocaleString('en-US', { minimumFractionDigits: 2 }));
-        $('[name="tax_amount"]').val(tax_amount);
-
-        $('#grand_total').text(sub_total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
-        $('[name="grand_total"]').val(sub_total);
-
-        $('#sub_total').text(sub_total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
-        $('[name="sub_total"]').text(sub_total.toLocaleString('en-US', { minimumFractionDigits: 2 }));
-
-        const newTotalSum = totalSum.toFixed(2);
-        $('#grand_total').text(newTotalSum);
-    }
-
-
-    function autoScan() {
-    const myInput = $('#barcode-input');
-
-    myInput.on('input', () => {
-        const inputValue = myInput.val();
-        console.log('Input value changed:', inputValue);
-
-        if (inputValue.length === 8) {
-            $.ajax({
-                url: "{% url 'lookup-product' %}",
-                method: "GET",
-                data: { barcode: inputValue },
-                dataType: "json",
-                success: function (response) {
-                    if (response.status === 'success') {
-                        const product = response.product;
-                        const qty = parseFloat($('#product-qty').val()); // Get the quantity from the input
-                        const price = parseFloat(product.price);
-                        const total = qty * price;
-
-                        const data = {
-                            qty: qty,
-                            name: product.name,
-                            price: price,
-                            total: total
-                        };
-
-                        // Now you can use the 'data' object as needed
-                        console.log(data);
-
-                        const tableBody = $('tbody');
-                        const newRow = $('<tr>');
-
-                        newRow.append($('<td>').html('<button class="btn btn-sm btn-outline-danger rounded-0 rem-item" type="button"><i class="mdi mdi-close"></i></button>')
-                            .click(function () {
-                                if (confirm("Are you sure to remove " + product.code + " product from the list?")) {
-                                    newRow.remove();
-                                    comp();
-                                }
-                            })
-                        );
-
-                        newRow.append($('<td>').text(data.qty));
-                        newRow.append($('<td>').text(data.name));
-                        newRow.append($('<td>').text(data.price));
-                        newRow.append($('<td>').text(data.total));
-
-                        tableBody.append(newRow);
-
-                        comp();
-
-                    } else {
-                        alert("Product not found.");
-                    }
-
-                    myInput.val('');
-                },
-                error: function (error) {
-                    console.error("Error while looking up product:", error);
-                    myInput.val('');
-                }
-            });
-        }
-    });
-    $('#check_out').click(function () {
-        console.log("John K")
-                            if ($('#POS-field table tbody tr').length <= 0) {
-                                alert("Add at least 1 product first!")
-                                return false;
-                            }
-                            uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val())
-                        })
-                        $('#pos-form').submit(function (e) {
-                            
-            e.preventDefault();
-            alert("JK")
-            var _this = $(this)
-            $('.err-msg').remove();
-            var el = $('<div>')
-            el.addClass("alert alert-danger err-msg")
-            el.hide()
-            if (_this[0].checkValidity() == false) {
-                _this[0].reportValidity();
-                return false;
-            }
-            start_loader();
-            $.ajax({
-                headers: {
-                    "X-CSRFToken": '{{csrf_token}}'
-                },
-                url: "{% url 'save-pos' %}",
-                data: new FormData($(this)[0]),
-                cache: false,
-                contentType: false,
-                processData: false,
-                method: 'POST',
-                type: 'POST',
-                dataType: 'json',
-                error: err => {
-                    console.log(err)
-                    console.log(new FormData($(this)[0]))
-                    end_loader();
-                },
-                success: function (resp) {
-                    console.log(new FormData($(this)[0]))
-                    if (typeof resp == 'object' && resp.status == 'success') {
-                        el.removeClass("alert alert-danger err-msg")
-                        // location.reload()
-                        uni_modal("Receipt", "{% url 'receipt-modal' %}?id=" + resp.sale_id)
-                        $('#uni_modal').on('hide.bs.modal', function () {
-                            location.reload()
-                        })
-                    } else if (resp.status == 'failed' && !!resp.msg) {
-                        el.text(resp.msg)
-                    } else {
-                        el.text("An error occured", 'error');
-                        end_loader();
-                        console.err(resp)
-                    }
-                    _this.prepend(el)
-                    el.show('slow')
-                    $("html, body, .modal").scrollTop(0);
-                    end_loader()
-                }
-            })
-        })
-}
-
-
-
-    // Call the autoScan function to enable scanning and adding to the table
-    autoScan();
 </script>
 {% endblock ScriptBlock %}

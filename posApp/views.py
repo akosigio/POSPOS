@@ -26,6 +26,7 @@ def lookup_product(request):
             response_data = {
                 'status': 'success',
                 'product': {
+                    'id': product.id,
                     'name': product.name,
                     'price': product.price,
                 }
@@ -63,7 +64,6 @@ def logoutuser(request):
     logout(request)
     return redirect('/')
 
-# Create your views here.
 @login_required
 def home(request):
     now = datetime.now()
@@ -71,17 +71,36 @@ def home(request):
     current_month = now.strftime("%m")
     current_day = now.strftime("%d")
 
+    # Query monthly and yearly expenses
     monthly_expenses = Expense.objects.annotate(month=TruncMonth('date')).values('month').annotate(total=Sum('amount'))
     yearly_expenses = Expense.objects.annotate(year=TruncYear('date')).values('year').annotate(total=Sum('amount'))
 
+    # Query total monthly sales
+    total_monthly_sales = Sales.objects.filter(
+        date_added__year=current_year,
+        date_added__month=current_month
+    ).aggregate(Sum('grand_total'))['grand_total__sum'] or 0
+
+    # Query total today's sales
+    today_sales = Sales.objects.filter(
+        date_added__year=current_year,
+        date_added__month=current_month,
+        date_added__day=current_day
+    )
+    total_today_sales = sum(today_sales.values_list('grand_total', flat=True))
+
+    # Query total monthly expenses
     total_monthly_expenses = Expense.objects.filter(
         date__year=current_year,
         date__month=current_month
     ).aggregate(Sum('amount'))['amount__sum'] or 0
 
+    # Query total yearly expenses
     total_yearly_expenses = Expense.objects.filter(
         date__year=current_year
     ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+    # Query total daily expenses
     daily_expenses = Expense.objects.filter(
         date__year=current_year,
         date__month=current_month,
@@ -89,26 +108,28 @@ def home(request):
     )
     total_daily_expenses = daily_expenses.aggregate(Sum('amount'))['amount__sum'] or 0
 
+    # Calculate other statistics
     expense_count = Expense.objects.count()
     categories = len(Category.objects.all())
     products = len(Products.objects.all())
     transaction = len(Sales.objects.filter(
         date_added__year=current_year,
-        date_added__month = current_month,
-        date_added__day = current_day
+        date_added__month=current_month,
+        date_added__day=current_day
     ))
     today_sales = Sales.objects.filter(
         date_added__year=current_year,
-        date_added__month = current_month,
-        date_added__day = current_day
+        date_added__month=current_month,
+        date_added__day=current_day
     ).all()
-    total_sales = sum(today_sales.values_list('grand_total',flat=True))
+    total_sales = sum(today_sales.values_list('grand_total', flat=True))
+
     context = {
-        'page_title':'Home',
-        'categories' : categories,
-        'products' : products,
-        'transaction' : transaction,
-        'total_sales' : total_sales,
+        'page_title': 'Home',
+        'categories': categories, 
+        'products': products,
+        'transaction': transaction,
+        'total_sales': total_sales,
         'expense': expense_count,
         'monthly_expenses': monthly_expenses,
         'yearly_expenses': yearly_expenses,
@@ -116,9 +137,11 @@ def home(request):
         'total_daily_expenses': total_daily_expenses,
         'total_monthly_expenses': total_monthly_expenses,
         'total_yearly_expenses': total_yearly_expenses,
-        
+        'total_today_sales': total_today_sales,
+        'total_monthly_sales': total_monthly_sales,
     }
-    return render(request, 'posApp/home.html',context)
+
+    return render(request, 'posApp/home.html', context)
 
 
 def about(request):
