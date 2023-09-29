@@ -1,5 +1,5 @@
 {% extends "posApp/base.html" %} {% load humanize %} {% block pageContent %}
-<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+<<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
     <div class="mdc-card with-background-image">
         <div class="d-flex justify-content-between">
             <h1 class="card-title mb-0">.</h1>
@@ -30,26 +30,34 @@
                 </thead>
                 <tbody>
                     {% for sale in sale_data %}
-                    <tr>
-                        <td class="px-2 py-1 text-center">{{ sale.id }}</td>
-                        <td class="px-2 py-1 text-center">{{ sale.date_added|date:'Y-m-d H:i' }}</td>
-                        <td class="px-2 py-1 text-center">{{ sale.code }}</td>
-                        <td class="px-2 py-1 text-center">{{ sale.grand_total|intcomma }}</td>
-                        <td class="px-2 py-1 text-center">{{ sale.item_count|intcomma }}</td>
-                        <td class="px-2 py-1 text-center">
-                            <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded view-data" type="button" data-id="{{ sale.id }}" title="View Receipt">
-                                <i class="material-icons mdc-button__icon">receipt</i>
-                            </button>
-                            <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ sale.id }}" data-code="{{ sale.code }}" title="Delete">
-                                <i class="material-icons mdc-button__icon">deleteoutline</i>
-                            </button>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td class="px-2 py-1 text-center">{{ sale.id }}</td>
+                            <td class="px-2 py-1 text-center">{{ sale.date_added|date:'Y-m-d H:i' }}</td>
+                            <td class="px-2 py-1 text-center">{{ sale.code }}</td>
+                            <td class="px-2 py-1 text-center">{{ sale.grand_total|intcomma }}</td>
+                            <td class="px-2 py-1 text-center">{{ sale.item_count|intcomma }}</td>
+                            <td class="px-2 py-1 text-center">
+                                <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--light mdc-ripple-upgraded view-data" type="button" data-id="{{ sale.id }}" title="View Receipt">
+                                    <i class="material-icons mdc-button__icon">receipt</i>
+                                </button>
+                                <button class="mdc-button mdc-button--raised p-1 icon-button filled-button--danger mdc-ripple-upgraded delete-data" type="button" data-id="{{ sale.id }}" data-code="{{ sale.code }}" title="Delete">
+                                    <i class="material-icons mdc-button__icon">deleteoutline</i>
+                                </button>
+                            </td>
+                        </tr>
                     {% endfor %}
+                    {% with total_sale|intcomma as formatted_total_sale %}
+                    <tr>
+                        <td colspan="3" class="text-right">Total Sale:</td>
+                        <td class="px-2 py-1 text-center">{{ formatted_total_sale }}</td>
+                        <td colspan="2"></td>
+                    </tr>
+                    {% endwith %}
                 </tbody>
             </table>
         </div>
     </div>
+</div>
 </div>
 {% endblock pageContent %} {% block ScriptBlock %}
 <script>

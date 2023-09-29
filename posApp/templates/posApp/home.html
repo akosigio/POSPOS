@@ -13,7 +13,7 @@
     <div class="mdc-card info-card info-card--secondary with-border rounded">
         <div class="card-inner">
             <h5 class="card-title">Today's Sales</h5>
-            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ total_today_sales|intcomma }}</h5>
+            <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ total_sale.grand_total|intcomma }}</h5>
             <p class="tx-12 text-muted">Today's Sales</p>
             <div class="card-icon-wrapper">
                 <i class="material-icons">receipt</i>
@@ -34,7 +34,7 @@
     </div>
 </div>
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-3-tablet">
-    <div class="mdc-card info-card info-card--success with-borders rounded">
+    <div class="mdc-card info-card info-card--success with-borders rounded" style="border-color: #003049;">
         <div class="card-inner">
             <h5 class="card-title">Daily Expenses</h5>
             <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ total_daily_expenses|intcomma }}</h5>
@@ -45,8 +45,9 @@
         </div>
     </div>
 </div>
+
 <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-3-desktop mdc-layout-grid__cell--span-3-tablet">
-    <div class="mdc-card info-card info-card--dark with-borders rounded">
+    <div class="mdc-card info-card info-card--dark with-borders rounded"  style="border-color: #7c73e6;">
         <div class="card-inner">
             <h5 class="card-title">Monthly Expenses</h5>
             <h5 class="font-weight-light pb-2 mb-1 border-bottom">{{ total_monthly_expenses|intcomma }}</h5>
@@ -88,8 +89,8 @@
 
 <script>
     // Extract data from Django template and remove commas for parsing as floats
+    var totalTodaySales = parseFloat("{{ total_sale.grand_total|intcomma }}".replace(/,/g, ''));
     var totalMonthlySales = parseFloat("{{ total_monthly_sales|intcomma }}".replace(/,/g, ''));
-    var totalTodaySales = parseFloat("{{ total_today_sales|intcomma }}".replace(/,/g, ''));
     var totalDailyExpenses = parseFloat("{{ total_daily_expenses|intcomma }}".replace(/,/g, ''));
     var totalMonthlyExpenses = parseFloat("{{ total_monthly_expenses|intcomma }}".replace(/,/g, ''));
 

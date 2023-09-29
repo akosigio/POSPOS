@@ -15,6 +15,8 @@ from .models import Products, Category
 from django.views.decorators.csrf import csrf_exempt
 from .models import Expense
 from django.db.models.functions import TruncMonth, TruncYear
+
+from posApp import models
 # Login
 
 def lookup_product(request):
@@ -72,22 +74,23 @@ def home(request):
     current_day = now.strftime("%d")
 
     # Query monthly and yearly expenses
+    total_sale = Sales.objects.aggregate(grand_total=Sum('grand_total'))
     monthly_expenses = Expense.objects.annotate(month=TruncMonth('date')).values('month').annotate(total=Sum('amount'))
     yearly_expenses = Expense.objects.annotate(year=TruncYear('date')).values('year').annotate(total=Sum('amount'))
 
     # Query total monthly sales
-    total_monthly_sales = Sales.objects.filter(
-        date_added__year=current_year,
-        date_added__month=current_month
-    ).aggregate(Sum('grand_total'))['grand_total__sum'] or 0
-
-    # Query total today's sales
     today_sales = Sales.objects.filter(
         date_added__year=current_year,
         date_added__month=current_month,
         date_added__day=current_day
-    )
-    total_today_sales = sum(today_sales.values_list('grand_total', flat=True))
+    ).aggregate(Sum('grand_total'))['grand_total__sum'] or 0
+
+    # Calculate total monthly sales
+    total_monthly_sales = Sales.objects.filter(
+    date_added__year=current_year,
+    date_added__month=current_month
+    ).aggregate(Sum('grand_total'))['grand_total__sum'] or 0
+
 
     # Query total monthly expenses
     total_monthly_expenses = Expense.objects.filter(
@@ -137,8 +140,8 @@ def home(request):
         'total_daily_expenses': total_daily_expenses,
         'total_monthly_expenses': total_monthly_expenses,
         'total_yearly_expenses': total_yearly_expenses,
-        'total_today_sales': total_today_sales,
-        'total_monthly_sales': total_monthly_sales,
+        'total_sale': total_sale,
+        'total_monthly_sales':total_monthly_sales, 
     }
 
     return render(request, 'posApp/home.html', context)
@@ -355,25 +358,29 @@ def save_pos(request):
 def salesList(request):
     sales = Sales.objects.all()
     sale_data = []
+    total_sale = 0  # Initialize total_sale
+
     for sale in sales:
         data = {}
         for field in sale._meta.get_fields(include_parents=False):
             if field.related_model is None:
-                data[field.name] = getattr(sale,field.name)
-        data['items'] = salesItems.objects.filter(sale_id = sale).all()
+                data[field.name] = getattr(sale, field.name)
+        data['items'] = salesItems.objects.filter(sale_id=sale).all()
         data['item_count'] = len(data['items'])
         if 'tax_amount' in data:
-            data['tax_amount'] = format(float(data['tax_amount']),'.2f')
-        # print(data)
-        sale_data.append(data)
-    # print(sale_data)
-    context = {
-        'page_title':'Sales Transactions',
-        'sale_data':sale_data,
-    }
-    # return HttpResponse('')
-    return render(request, 'posApp/sales.html',context)
+            data['tax_amount'] = format(float(data['tax_amount']), '.2f')
 
+        total_sale += sale.grand_total  # Add each sale's grand_total to total_sale
+
+        sale_data.append(data)
+
+    context = {
+        'page_title': 'Sales Transactions',
+        'sale_data': sale_data,
+        'total_sale': total_sale,  # Pass the total_sale to the template
+    }
+
+    return render(request, 'posApp/sales.html', context)
 @login_required
 def receipt(request):
     id = request.GET.get('id')
